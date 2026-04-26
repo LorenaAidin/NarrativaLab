@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NarrativaLab v2.0 — Asistente de Rutas Narrativas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0f0e0d;
+      --paper: #f5f2eb;
+      --accent: #d94f2b;
+      --green: #1a7a4a;
+      --yellow: #c8890a;
+      --red: #c0392b;
+      --muted: #8a8070;
+      --border: #d4cfc3;
+      --card: #fffcf5;
+      --mono: 'IBM Plex Mono', monospace;
+      --display: 'Syne', sans-serif;
+      --serif: 'Instrument Serif', serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--display);
+      min-height: 100vh;
+    }
+
+    /* ── PAGE SHELL ── */
+    .page-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .logo {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+    .title {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.03em;
+    }
+    .title span {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--accent);
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: .6rem;
+      font-family: var(--mono);
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      display: flex;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .step-item {
+      flex: 1;
+      padding: .55rem .5rem;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      border-right: 1px solid var(--border);
+      text-align: center;
+      transition: background .2s, color .2s;
+      white-space: nowrap;
+    }
+    .step-item:last-child { border-right: none; }
+    .step-item.active { background: var(--ink); color: var(--paper); }
+    .step-item.done { background: var(--green); color: #fff; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.6rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .85rem;
+    }
+
+    /* ── FORM ── */
+    label {
+      display: block;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      margin-bottom: .4rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    input[type=text], textarea, select {
+      width: 100%;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .7rem .9rem;
+      font-family: var(--display);
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s;
+      margin-bottom: 1.2rem;
+    }
+    input[type=text]:focus, textarea:focus, select:focus { border-color: var(--ink); }
+    textarea { resize: vertical; min-height: 95px; }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8070' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right .9rem center;
+      cursor: pointer;
+    }
+
+    /* ── SLIDERS ── */
+    .slider-row { margin-bottom: 1.2rem; }
+    .slider-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: .4rem; }
+    .slider-meta label { margin-bottom: 0; }
+    .slider-val { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+    input[type=range] { width: 100%; accent-color: var(--ink); height: 4px; cursor: pointer; }
+    .slider-scale { display: flex; justify-content: space-between; font-size: 10px; font-family: var(--mono); color: var(--muted); margin-top: 3px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1.5rem;
+      border-radius: 4px;
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      cursor: pointer;
+      border: none;
+      transition: background .15s, color .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: var(--ink); color: var(--paper); }
+    .btn-primary:hover { background: #2a2825; }
+    .btn-outline { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+    .btn-outline:hover { background: var(--ink); color: var(--paper); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: #b8401f; }
+    .btn-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: .75rem; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: 6px;
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--ink);
+      background: #f0ede4;
+    }
+    .upload-zone input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+    .upload-icon { font-size: 1.8rem; margin-bottom: .6rem; display: block; }
+    .upload-label { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: .3rem; }
+    .upload-hint { font-size: 11px; font-family: var(--mono); color: var(--muted); }
+
+    .file-list { display: flex; flex-direction: column; gap: .5rem; margin-bottom: .85rem; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .65rem .9rem;
+    }
+    .file-icon { font-size: 1.1rem; line-height: 1; flex-shrink: 0; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-top: 2px; }
+    .file-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: .2rem .55rem;
+      border-radius: 3px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .badge-pdf { background: #fdf0ee; color: #a0321c; }
+    .badge-csv { background: #e8f5ee; color: #1a5c38; }
+    .badge-xlsx { background: #eaf3ff; color: #1a4d8a; }
+    .badge-doc { background: #f0eeff; color: #4a2fa0; }
+    .badge-other { background: var(--paper); color: var(--muted); border: 1px solid var(--border); }
+    .file-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--muted);
+      padding: .2rem;
+      line-height: 1;
+      transition: color .15s;
+      flex-shrink: 0;
+    }
+    .file-remove:hover { color: var(--red); }
+    .fmt-badges { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+    .upload-summary { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: .85rem; }
+    .upload-summary strong { color: var(--ink); }
+
+    /* ── VERDICT ── */
+    .verdict {
+      padding: 1.25rem 1.5rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .verdict.green { background: #e8f5ee; border: 1.5px solid var(--green); }
+    .verdict.yellow { background: #fef9ec; border: 1.5px solid var(--yellow); }
+    .verdict.red { background: #fdf0ee; border: 1.5px solid var(--red); }
+    .verdict-icon { font-size: 2.2rem; line-height: 1; }
+    .verdict-label { font-size: 10px; font-family: var(--mono); letter-spacing: .1em; text-transform: uppercase; opacity: .7; margin-bottom: .2rem; }
+    .verdict-text { font-size: 1.1rem; font-weight: 700; }
+
+    /* ── SCORE BARS ── */
+    .score-bars { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
+    .bar-item { background: var(--paper); border: 1px solid var(--border); border-radius: 5px; padding: .9rem; }
+    .bar-label { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: .5rem; }
+    .bar-track { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+    .bar-score { font-size: 20px; font-weight: 800; margin-top: .5rem; }
+
+    /* ── OVERRIDE ── */
+    .override-block { display: none; }
+    .override-block.visible { display: block; }
+    .override-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .override-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      letter-spacing: .1em;
+      padding: .35rem .75rem;
+      background: var(--red);
+      color: #fff;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+    textarea.override-ta { border-color: var(--red); }
+
+    /* ── ROUTES ── */
+    .route-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.15rem 1.3rem;
+      margin-bottom: .9rem;
+      position: relative;
+    }
+    .route-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 4px 0 0 4px;
+    }
+    .route-card.r1::before { background: var(--accent); }
+    .route-card.r2::before { background: #3a7bd5; }
+    .route-num { font-size: 10px; font-family: var(--mono); letter-spacing: .1em; color: var(--muted); margin-bottom: .35rem; }
+    .route-title { font-weight: 700; font-size: 1rem; margin-bottom: .45rem; }
+    .route-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .route-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+
+    /* ── TAGS ── */
+    .tag {
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: .22rem .65rem;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--ink);
+    }
+
+    /* ── HEADLINES ── */
+    .headline-list { list-style: none; margin-bottom: 1rem; }
+    .headline-list li {
+      padding: .7rem 0;
+      border-bottom: .5px solid var(--border);
+      font-size: 15px;
+      font-family: var(--serif);
+      font-style: italic;
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      line-height: 1.4;
+    }
+    .headline-list li:last-child { border-bottom: none; }
+    .hl-num { font-family: var(--mono); font-style: normal; font-size: 11px; color: var(--muted); margin-top: 3px; min-width: 18px; }
+
+    /* ── SPRINT GRID ── */
+    .sprint-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-bottom: .6rem; }
+    .sprint-cell {
+      height: 36px;
+      border-radius: 3px;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.3;
+    }
+    .sprint-cell.filled { color: #fff; font-weight: 500; }
+    .sprint-cell.c1 { background: #d94f2b; }
+    .sprint-cell.c2 { background: #c8890a; }
+    .sprint-cell.c3 { background: #1a7a4a; }
+    .sprint-cell.c4 { background: #3a7bd5; }
+    .sprint-legend { display: flex; flex-wrap: wrap; gap: .75rem; font-size: 11px; font-family: var(--mono); color: var(--muted); }
+    .leg-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+
+    /* ── UTILITIES ── */
+    .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+    .section-tag { font-size: 10px; font-family: var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: .65rem; }
+
+    /* ── SHOW/HIDE ── */
+    .score-block { display: none; }
+    .score-block.visible { display: block; }
+    .routes-block { display: none; }
+    .routes-block.visible { display: block; }
+
+    /* ── LOADING ── */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2.5rem;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .loading.visible { display: block; }
+    .dot-anim::after { content: '...'; animation: dots 1.2s infinite; }
+    @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} 100%{content:''} }
+
+    /* ── FADE IN ── */
+    .fade-in { animation: fadeIn .4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 540px) {
+      .score-bars { grid-template-columns: 1fr; }
+      .steps { flex-wrap: wrap; }
+      .step-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .step-item:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">NarrativaLab · v2.0 · Preproducción editorial</div>
+    <h1 class="title">Asistente de <span>Rutas Narrativas</span></h1>
+    <p class="subtitle">// De la idea caótica al plan narrativo y visual en minutos</p>
+  </header>
+
+  <!-- STEPS -->
+  <nav class="steps" aria-label="Pasos del flujo">
+    <div class="step-item active" id="s1">01 · Ingreso</div>
+    <div class="step-item" id="s2">02 · Scoring</div>
+    <div class="step-item" id="s3">03 · Rutas</div>
+    <div class="step-item" id="s4">04 · Plan</div>
+  </nav>
+
+  <!-- ══════════════════════════════════ STEP 1 ══════════════════════════════════ -->
+  <section id="step1">
+
+    <!-- Datos del proyecto -->
+    <div class="card">
+      <div class="card-label">Datos del proyecto</div>
+
+      <label for="idea">Título o idea principal</label>
+      <input type="text" id="idea" placeholder="Ej: Corrupción en contratos municipales 2019–2024" />
+
+      <label for="dataset">Descripción del dataset o materiales</label>
+      <textarea id="dataset" placeholder="Describe qué datos tienes: Excel con 3.000 contratos, audios de fuentes, documentos PDF filtrados..."></textarea>
+
+      <label for="area">Área temática</label>
+      <select id="area">
+        <option value="">Selecciona...</option>
+        <option>Política y gobierno</option>
+        <option>Economía y finanzas</option>
+        <option>Sociedad y derechos</option>
+        <option>Medio ambiente</option>
+        <option>Salud pública</option>
+        <option>Seguridad y justicia</option>
+        <option>Tecnología e innovación</option>
+      </select>
+    </div>
+
+    <!-- Material de respaldo -->
+    <div class="card">
+      <div class="card-label">Material de respaldo</div>
+
+      <div id="fileList" class="file-list" style="display:none;"></div>
+      <p id="uploadSummary" class="upload-summary" style="display:none;"></p>
+
+      <div class="upload-zone" id="dropZone">
+        <input type="file" id="fileInput" multiple
+          accept=".pdf,.csv,.xlsx,.xls,.doc,.docx,.txt,.json,.tsv"
+          onchange="handleFiles(this.files)" />
+        <span class="upload-icon">📎</span>
+        <div class="upload-label">Arrastra archivos aquí o haz clic para seleccionar</div>
+        <div class="upload-hint">PDF · CSV · Excel · Word · JSON · TXT &nbsp;|&nbsp; Máx. 5 archivos</div>
+      </div>
+
+      <div class="fmt-badges">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--muted);align-self:center;">Formatos:</span>
+        <span class="file-badge badge-pdf">PDF</span>
+        <span class="file-badge badge-csv">CSV</span>
+        <span class="file-badge badge-xlsx">XLSX / XLS</span>
+        <span class="file-badge badge-doc">DOC / DOCX</span>
+        <span class="file-badge badge-other">TXT · JSON</span>
+      </div>
+    </div>
+
+    <!-- Variables de evaluación -->
+    <div class="card">
+      <div class="card-label">Variables de evaluación</div>
+
+      <div class="slider-row">
+        <div class="slider-meta">
+          <label for="v1">Volumen de datos</label>
+          <span class="slider-val" id="v1val">3</span>
+        </div>
+        <input type="range" min="1" max="5" value="3" id="v1"
+          oninput="document.getElementById('v1val').textContent=this.value" />
+        <div class="slider-scale"><span>Mínimo</span><span>Masivo</span></div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-meta">
+          <label for="v2">Potencial visual</label>
+          <span class="slider-val" id="v2val">3</span>
+        </div>
+        <input type="range" min="1" max="5" value="3" id="v2"
+          oninput="document.getElementById('v2val').textContent=this.value" />
+        <div class="slider-scale"><span>Bajo</span><span>Alto</span></div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-meta">
+          <label for="v3">Existencia de caso humano</label>
+          <span class="slider-val" id="v3val">3</span>
+        </div>
+        <input type="range" min="1" max="5" value="3" id="v3"
+          oninput="document.getElementById('v3val').textContent=this.value" />
+        <div class="slider-scale"><span>Sin casos</span><span>Perfil sólido</span></div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-meta">
+          <label for="v4">Impacto narrativo</label>
+          <span class="slider-val" id="v4val">3</span>
+        </div>
+        <input type="range" min="1" max="5" value="3" id="v4"
+          oninput="document.getElementById('v4val').textContent=this.value" />
+        <div class="slider-scale"><span>Informativo</span><span>Alto impacto</span></div>
+      </div>
+
+      <div class="slider-row">
+        <div class="slider-meta">
+          <label for="v5">Complejidad técnica</label>
+          <span class="slider-val" id="v5val">3</span>
+        </div>
+        <input type="range" min="1" max="5" value="3" id="v5"
+          oninput="document.getElementById('v5val').textContent=this.value" />
+        <div class="slider-scale"><span>Simple</span><span>Complejo</span></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runScoring()">Analizar proyecto →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading" aria-live="polite">
+    <span class="dot-anim">Analizando viabilidad</span>
+  </div>
+
+  <!-- ══════════════════════════════════ STEP 2 ══════════════════════════════════ -->
+  <section class="score-block" id="step2">
+    <div class="card fade-in">
+      <div class="card-label">Resultado del scoring</div>
+
+      <div class="verdict" id="verdictBox">
+        <div class="verdict-icon" id="verdictIcon">🟢</div>
+        <div>
+          <div class="verdict-label">Clasificación del sistema</div>
+          <div class="verdict-text" id="verdictText">Especial interactivo</div>
+        </div>
+      </div>
+
+      <!-- Archivos adjuntos mostrados en scoring -->
+      <div id="scoringFiles" style="display:none; margin-bottom:1rem;"></div>
+
+      <div class="score-bars">
+        <div class="bar-item">
+          <div class="bar-label">Volumen de datos</div>
+          <div class="bar-track"><div class="bar-fill" id="bar1" style="width:0%;background:#d94f2b;"></div></div>
+          <div class="bar-score" id="barscore1">–</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Potencial visual</div>
+          <div class="bar-track"><div class="bar-fill" id="bar2" style="width:0%;background:#c8890a;"></div></div>
+          <div class="bar-score" id="barscore2">–</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Caso humano</div>
+          <div class="bar-track"><div class="bar-fill" id="bar3" style="width:0%;background:#1a7a4a;"></div></div>
+          <div class="bar-score" id="barscore3">–</div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Impacto narrativo</div>
+          <div class="bar-track"><div class="bar-fill" id="bar4" style="width:0%;background:#3a7bd5;"></div></div>
+          <div class="bar-score" id="barscore4">–</div>
+        </div>
+      </div>
+
+      <p style="font-size:13px;font-family:var(--mono);color:var(--muted);margin-bottom:1rem;">
+        Score total: <strong id="totalScore" style="color:var(--ink);font-size:16px;">–</strong> / 25
+      </p>
+
+      <!-- OVERRIDE EDITORIAL -->
+      <div class="override-block" id="overrideBlock">
+        <div class="divider"></div>
+        <div class="override-header">
+          <span class="override-badge">⚠ Override Editorial</span>
+          <span style="font-size:12px;font-family:var(--mono);color:var(--muted);">El sistema marcó 🔴 — ¿Activar override?</span>
+        </div>
+        <label for="overrideText">Justificación editorial obligatoria</label>
+        <textarea class="override-ta" id="overrideText"
+          placeholder="Explica por qué este tema merece un especial a pesar del score bajo. Ej: alto impacto político, fuente exclusiva, momento coyuntural..."></textarea>
+        <div class="btn-row">
+          <button class="btn btn-accent" onclick="activateOverride()">
+            Forzar recategorización como "Investigación especial"
+          </button>
+          <button class="btn btn-outline" onclick="continueWithScore()">
+            Continuar sin override →
+          </button>
+        </div>
+      </div>
+
+      <div class="btn-row" id="continueBtn" style="display:none;">
+        <button class="btn btn-primary" onclick="showRoutes()">Ver rutas narrativas →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════ STEP 3 ══════════════════════════════════ -->
+  <section class="routes-block" id="step3">
+    <div class="card fade-in">
+      <div class="card-label">Rutas narrativas sugeridas</div>
+
+      <div class="route-card r1">
+        <div class="route-num">Ruta 01 · Principal</div>
+        <div class="route-title" id="route1title">—</div>
+        <div class="route-desc" id="route1desc">—</div>
+        <div class="route-tags" id="route1tags"></div>
+      </div>
+
+      <div class="route-card r2">
+        <div class="route-num">Ruta 02 · Alternativa</div>
+        <div class="route-title" id="route2title">—</div>
+        <div class="route-desc" id="route2desc">—</div>
+        <div class="route-tags" id="route2tags"></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-tag">Titulares sugeridos</div>
+      <ul class="headline-list" id="headlines"></ul>
+
+      <div class="divider"></div>
+      <div class="section-tag">Visualizaciones recomendadas (Flourish / Tableau)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;" id="vizTags"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="showPlan()">Ver cronograma de producción →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════ STEP 4 ══════════════════════════════════ -->
+  <section class="routes-block" id="step4">
+    <div class="card fade-in">
+      <div class="card-label">Cronograma de producción · Sprint 8 semanas</div>
+
+      <div class="sprint-grid" id="sprintGrid"></div>
+      <p style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:.85rem;">S1–S8 = Semanas de producción</p>
+
+      <div class="sprint-legend">
+        <span><span class="leg-dot" style="background:#d94f2b;"></span>Investigación</span>
+        <span><span class="leg-dot" style="background:#c8890a;"></span>Diseño narrativo</span>
+        <span><span class="leg-dot" style="background:#1a7a4a;"></span>Producción visual</span>
+        <span><span class="leg-dot" style="background:#3a7bd5;"></span>Programación</span>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-tag">Roles involucrados</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem;" id="rolesTags"></div>
+
+      <div class="section-tag">Herramientas del stack</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem;" id="stackTags"></div>
+
+      <!-- Material adjunto en el plan final -->
+      <div id="planFiles" style="display:none;">
+        <div class="divider"></div>
+        <div class="section-tag">Material adjunto al proyecto</div>
+        <div id="planFileList" class="file-list"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="resetAll()">← Nuevo proyecto</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /page-wrap -->
+
+<script>
+/* ──────────────────────────────────────
+   STATE
+────────────────────────────────────── */
+let uploadedFiles = [];
+let currentLevel  = 'high';
+
+/* ──────────────────────────────────────
+   ROUTES DATA
+────────────────────────────────────── */
+const ROUTES = {
+  high: {
+    r1t: 'Narrativa de datos inmersiva con perfil humano central',
+    r1d: 'Construye el especial alrededor del caso humano más representativo del dataset, usando visualizaciones interactivas para contextualizar su historia dentro del patrón general.',
+    r1tags: ['Scrollytelling', 'Mapa interactivo', 'Red de poder', 'Parallax'],
+    r2t: 'Cronología comparativa de actores y decisiones',
+    r2d: 'Mapea las decisiones clave y los actores involucrados en una línea de tiempo navegable, permitiendo al lector explorar relaciones causales por sí mismo.',
+    r2tags: ['Timeline interactivo', 'Diagrama de red', 'Buscador en datos'],
+    headlines: [
+      'Los números que nadie quería publicar',
+      'Así funciona la maquinaria: datos, nombres y fechas',
+      'El caso que lo explica todo'
+    ],
+    viz: ['Flourish · Network graph', 'Flourish · Scrollytelling', 'Tableau · Mapa de calor', 'Flourish · Línea de tiempo']
+  },
+  mid: {
+    r1t: 'Visualización interactiva con contexto narrativo',
+    r1d: 'Un gráfico central explorable acompañado de texto editorial que guía la lectura. Menos inmersivo que un especial, más profundo que una nota.',
+    r1tags: ['Gráfico exploratorio', 'Destacado visual', 'Infografía animada'],
+    r2t: 'Nota larga con módulo de datos embebido',
+    r2d: 'Nota periodística estándar con un bloque de visualización integrado que amplía el argumento central sin requerir producción de especial completo.',
+    r2tags: ['Datawrapper', 'Gráfico de barras', 'Tabla filtrable'],
+    headlines: [
+      'Lo que los datos revelan sobre el problema',
+      'En cifras: cómo llegamos hasta aquí',
+      'El gráfico que resume todo'
+    ],
+    viz: ['Flourish · Gráfico de barras', 'Datawrapper · Línea de tiempo', 'Flourish · Tabla interactiva']
+  },
+  low: {
+    r1t: 'Nota informativa con datos de respaldo',
+    r1d: 'Texto periodístico estándar con uno o dos elementos visuales simples. El dataset sirve como fuente, no como protagonista.',
+    r1tags: ['Nota informativa', 'Gráfico estático', 'Cita destacada'],
+    r2t: 'Pieza de contexto para archivo editorial',
+    r2d: 'Contenido de referencia que documenta el tema para uso futuro o como antecedente de una investigación más profunda.',
+    r2tags: ['Archivo', 'Briefing interno', 'Nota de contexto'],
+    headlines: [
+      'Lo que se sabe hasta ahora',
+      'Los datos básicos del caso',
+      'Contexto: qué está pasando'
+    ],
+    viz: ['Gráfico estático', 'Tabla simple']
+  }
+};
+
+const SPRINT_DATA = [
+  { label: 'INV', cls: 'c1', weeks: [1,2,3] },
+  { label: 'DIS', cls: 'c2', weeks: [2,3,4] },
+  { label: 'VIS', cls: 'c3', weeks: [4,5,6] },
+  { label: 'COD', cls: 'c4', weeks: [5,6,7,8] }
+];
+
+/* ──────────────────────────────────────
+   FILE HELPERS
+────────────────────────────────────── */
+function getExt(name)  { return name.split('.').pop().toLowerCase(); }
+function fmtSize(b)    { return b < 1024 ? b + 'B' : b < 1048576 ? (b/1024).toFixed(1) + 'KB' : (b/1048576).toFixed(1) + 'MB'; }
+
+function getBadgeClass(ext) {
+  if (ext === 'pdf')                       return 'badge-pdf';
+  if (['csv','tsv'].includes(ext))         return 'badge-csv';
+  if (['xlsx','xls'].includes(ext))        return 'badge-xlsx';
+  if (['doc','docx'].includes(ext))        return 'badge-doc';
+  return 'badge-other';
+}
+
+function getFileIcon(ext) {
+  if (ext === 'pdf')                       return '📄';
+  if (['csv','tsv'].includes(ext))         return '📊';
+  if (['xlsx','xls'].includes(ext))        return '📗';
+  if (['doc','docx'].includes(ext))        return '📝';
+  if (ext === 'json')                      return '🗂';
+  return '📎';
+}
+
+function handleFiles(files) {
+  const ALLOWED = ['pdf','csv','xlsx','xls','doc','docx','txt','json','tsv'];
+  for (const f of files) {
+    if (uploadedFiles.length >= 5) { alert('Máximo 5 archivos por proyecto.'); break; }
+    const ext = getExt(f.name);
+    if (!ALLOWED.includes(ext)) { alert(`.${ext} no está permitido.`); continue; }
+    if (uploadedFiles.find(u => u.name === f.name)) continue;
+    uploadedFiles.push(f);
+  }
+  renderFileList();
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  renderFileList();
+  // reset file input so same file can be re-added
+  document.getElementById('fileInput').value = '';
+}
+
+function renderFileList() {
+  const listEl    = document.getElementById('fileList');
+  const summaryEl = document.getElementById('uploadSummary');
+
+  if (uploadedFiles.length === 0) {
+    listEl.style.display    = 'none';
+    summaryEl.style.display = 'none';
+    return;
+  }
+
+  listEl.style.display    = 'flex';
+  summaryEl.style.display = 'block';
+  summaryEl.innerHTML     = `<strong>${uploadedFiles.length}</strong> archivo${uploadedFiles.length > 1 ? 's' : ''} adjunto${uploadedFiles.length > 1 ? 's' : ''}`;
+
+  listEl.innerHTML = uploadedFiles.map((f, i) => {
+    const ext = getExt(f.name);
+    return `
+      <div class="file-item">
+        <span class="file-icon">${getFileIcon(ext)}</span>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-meta">${fmtSize(f.size)} · .${ext.toUpperCase()}</div>
+        </div>
+        <span class="file-badge ${getBadgeClass(ext)}">${ext.toUpperCase()}</span>
+        <button class="file-remove" onclick="removeFile(${i})" title="Eliminar archivo">✕</button>
+      </div>`;
+  }).join('');
+
+  // Auto-boost data-volume slider when a data file is present
+  const hasData = uploadedFiles.some(f => ['csv','xlsx','xls','tsv','json'].includes(getExt(f.name)));
+  const slider  = document.getElementById('v1');
+  if (hasData && +slider.value < 3) {
+    slider.value = 4;
+    document.getElementById('v1val').textContent = '4';
+  }
+}
+
+/* ──────────────────────────────────────
+   DRAG & DROP
+────────────────────────────────────── */
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+/* ──────────────────────────────────────
+   STEP 1 → SCORING
+────────────────────────────────────── */
+function runScoring() {
+  if (!document.getElementById('idea').value.trim()) {
+    alert('Ingresa una idea o título para continuar.');
+    return;
+  }
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('loading').classList.add('visible');
+  setTimeout(() => {
+    document.getElementById('loading').classList.remove('visible');
+    computeScore();
+  }, 1400);
+}
+
+function computeScore() {
+  const vals  = [1,2,3,4,5].map(i => +document.getElementById('v' + i).value);
+  const total = vals.reduce((a, b) => a + b, 0);
+  currentLevel = total >= 18 ? 'high' : total >= 11 ? 'mid' : 'low';
+
+  document.getElementById('step2').classList.add('visible');
+  updateSteps(2);
+
+  // Animate bars
+  ['bar1','bar2','bar3','bar4'].forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).style.width = (vals[i] / 5 * 100) + '%';
+      document.getElementById('barscore' + (i + 1)).textContent = vals[i] + '/5';
+    }, 200 + i * 150);
+  });
+  document.getElementById('totalScore').textContent = total;
+
+  // Verdict
+  const box  = document.getElementById('verdictBox');
+  const icon = document.getElementById('verdictIcon');
+  const text = document.getElementById('verdictText');
+  box.className = 'verdict';
+
+  if (currentLevel === 'high') {
+    box.classList.add('green');
+    icon.textContent = '🟢';
+    text.textContent = 'Especial interactivo';
+    document.getElementById('continueBtn').style.display = 'flex';
+  } else if (currentLevel === 'mid') {
+    box.classList.add('yellow');
+    icon.textContent = '🟡';
+    text.textContent = 'Visualización interactiva en nota';
+    document.getElementById('continueBtn').style.display = 'flex';
+  } else {
+    box.classList.add('red');
+    icon.textContent = '🔴';
+    text.textContent = 'Nota simple';
+    document.getElementById('overrideBlock').classList.add('visible');
+  }
+
+  // Show attached files summary in scoring panel
+  if (uploadedFiles.length > 0) {
+    const sf = document.getElementById('scoringFiles');
+    sf.style.display = 'block';
+    sf.innerHTML = `
+      <div class="section-tag" style="margin-bottom:.5rem;">Material adjunto analizado</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;">
+        ${uploadedFiles.map(f => `<span class="tag">${getFileIcon(getExt(f.name))} ${f.name}</span>`).join('')}
+      </div>`;
+  }
+}
+
+/* ──────────────────────────────────────
+   OVERRIDE EDITORIAL
+────────────────────────────────────── */
+function activateOverride() {
+  if (!document.getElementById('overrideText').value.trim()) {
+    alert('La justificación editorial es obligatoria para activar el override.');
+    return;
+  }
+  currentLevel = 'high';
+  const box  = document.getElementById('verdictBox');
+  const icon = document.getElementById('verdictIcon');
+  const text = document.getElementById('verdictText');
+  box.className = 'verdict green';
+  icon.textContent = '🟢';
+  text.textContent = 'Investigación especial (Override editorial activado)';
+  document.getElementById('overrideBlock').classList.remove('visible');
+  document.getElementById('continueBtn').style.display = 'flex';
+}
+
+function continueWithScore() {
+  document.getElementById('overrideBlock').classList.remove('visible');
+  document.getElementById('continueBtn').style.display = 'flex';
+}
+
+/* ──────────────────────────────────────
+   STEP 3 — ROUTES
+────────────────────────────────────── */
+function showRoutes() {
+  const r = ROUTES[currentLevel];
+
+  document.getElementById('route1title').textContent = r.r1t;
+  document.getElementById('route1desc').textContent  = r.r1d;
+  document.getElementById('route1tags').innerHTML    = r.r1tags.map(t => `<span class="tag">${t}</span>`).join('');
+
+  document.getElementById('route2title').textContent = r.r2t;
+  document.getElementById('route2desc').textContent  = r.r2d;
+  document.getElementById('route2tags').innerHTML    = r.r2tags.map(t => `<span class="tag">${t}</span>`).join('');
+
+  document.getElementById('headlines').innerHTML =
+    r.headlines.map((h, i) => `<li><span class="hl-num">0${i+1}</span>${h}</li>`).join('');
+
+  document.getElementById('vizTags').innerHTML =
+    r.viz.map(v => `<span class="tag">${v}</span>`).join('');
+
+  document.getElementById('step3').classList.add('visible');
+  updateSteps(3);
+  document.getElementById('step3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ──────────────────────────────────────
+   STEP 4 — PLAN
+────────────────────────────────────── */
+function showPlan() {
+  // Sprint grid
+  let cells = '';
+  for (let w = 1; w <= 8; w++) {
+    const match = SPRINT_DATA.find(r => r.weeks.includes(w));
+    cells += match
+      ? `<div class="sprint-cell filled ${match.cls}">S${w}<br>${match.label}</div>`
+      : `<div class="sprint-cell">S${w}</div>`;
+  }
+  document.getElementById('sprintGrid').innerHTML = cells;
+
+  // Roles & stack
+  const roles = ['Periodista de datos', 'Editor/a', 'Diseñador/a UX', 'Programador/a front', 'Infografista'];
+  const stack = ['Typebot', 'n8n / Make', 'Airtable', 'Glide', 'OpenAI / Gemini', 'Flourish', 'Tableau'];
+  document.getElementById('rolesTags').innerHTML  = roles.map(r => `<span class="tag">${r}</span>`).join('');
+  document.getElementById('stackTags').innerHTML  = stack.map(s => `<span class="tag">${s}</span>`).join('');
+
+  // Attached files
+  if (uploadedFiles.length > 0) {
+    document.getElementById('planFiles').style.display = 'block';
+    document.getElementById('planFileList').innerHTML  = uploadedFiles.map(f => {
+      const ext = getExt(f.name);
+      return `
+        <div class="file-item">
+          <span class="file-icon">${getFileIcon(ext)}</span>
+          <div class="file-info">
+            <div class="file-name">${f.name}</div>
+            <div class="file-meta">${fmtSize(f.size)} · .${ext.toUpperCase()}</div>
+          </div>
+          <span class="file-badge ${getBadgeClass(ext)}">${ext.toUpperCase()}</span>
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('step4').classList.add('visible');
+  updateSteps(4);
+  document.getElementById('step4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ──────────────────────────────────────
+   HELPERS
+────────────────────────────────────── */
+function updateSteps(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('s' + i);
+    el.className = 'step-item' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
+
+function resetAll() {
+  location.reload();
+}
+</script>
+</body>
+</html>
